@@ -132,3 +132,36 @@ function getMoveAwayPosition(creep, hostiles) {
     
     return {x: creep.x, y: creep.y}; // No valid moves, stay put
 }
+function getKiteDistanceUntilCornered(creep, hostiles) {
+    // Filter for melee hostiles
+    const meleeHostiles = hostiles.filter(h => {
+        if (!h.body || h.body.length === 0) return false;
+        
+        const hasAttack = h.body.some(part => part.type === ATTACK);
+        const hasRanged = h.body.some(part => part.type === RANGED_ATTACK);
+        
+        // Consider it melee if it has ATTACK but no RANGED_ATTACK
+        // Or if it has neither (basic creep with only MOVE/TOUGH)
+        return hasAttack && !hasRanged || (!hasAttack && !hasRanged);
+    });
+    
+    if (meleeHostiles.length === 0) {
+        return -1;
+    }
+    
+    // Find the closest melee hostile
+    let closestMelee = null;
+    let minDistance = Infinity;
+    
+    for (const hostile of meleeHostiles) {
+        const dist = Math.max(Math.abs(creep.x - hostile.x), Math.abs(creep.y - hostile.y));
+        if (dist < minDistance) {
+            minDistance = dist;
+            closestMelee = hostile;
+        }
+    }
+    
+    if (!closestMelee) return -1;
+    
+    return calculateKiteDistance(creep, closestMelee);
+}
