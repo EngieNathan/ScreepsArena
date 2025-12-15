@@ -165,3 +165,121 @@ function getKiteDistanceUntilCornered(creep, hostiles) {
     
     return calculateKiteDistance(creep, closestMelee);
 }
+function calculateKiteDistance(creep, closestMelee) {
+    // Calculate the direction away from the melee unit
+    const dx = creep.x - closestMelee.x;
+    const dy = creep.y - closestMelee.y;
+    
+    // If already adjacent or on top of melee unit
+    const distance = Math.max(Math.abs(dx), Math.abs(dy));
+    if (distance <= 1) {
+        return 0;
+    }
+    
+    // Get the kite direction (opposite of melee unit)
+    const kiteDirection = {
+        x: dx === 0 ? 0 : (dx > 0 ? 1 : -1),
+        y: dy === 0 ? 0 : (dy > 0 ? 1 : -1)
+    };
+    
+    // Simulate kiting path
+    let kiteDistance = 0;
+    let currentX = creep.x;
+    let currentY = creep.y;
+    const visitedPositions = new Set([`${currentX},${currentY}`]);
+    
+    while (kiteDistance < 50) {
+        // Calculate next position
+        let nextX = currentX + kiteDirection.x;
+        let nextY = currentY + kiteDirection.y;
+        
+        // Check if we can move to this position
+        if (isPositionValid(nextX, nextY, creep)) {
+            currentX = nextX;
+            currentY = nextY;
+            visitedPositions.add(`${currentX},${currentY}`);
+            kiteDistance++;
+        } else {
+            // Check if we're cornered
+            const availableMoves = getAvailableMoves(currentX, currentY, creep, visitedPositions);
+            
+            if (availableMoves.length === 0) {
+                break; // Cornered
+            } else {
+                // Try to continue in a similar direction
+                let bestMove = null;
+                let bestScore = -1;
+                
+                for (const move of availableMoves) {
+                    // Score based on similarity to kite direction
+                    const moveDx = move.x - currentX;
+                    const moveDy = move.y - currentY;
+                    const score = (moveDx * kiteDirection.x) + (moveDy * kiteDirection.y);
+                    
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMove = move;
+                    }
+                }
+                
+                if (bestMove) {
+                    currentX = bestMove.x;
+                    currentY = bestMove.y;
+                    visitedPositions.add(`${currentX},${currentY}`);
+                    kiteDistance++;
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+    
+    return kiteDistance;
+}
+
+function isPositionValid(x, y, creep) {
+    // Check bounds
+    if (x < 0 || x >= 100 || y < 0 || y >= 100) {
+        return false;
+    }
+    
+    // Check terrain using getTerrainAt
+    const terrain = getTerrainAt({x: x, y: y});
+    if (terrain === TERRAIN_WALL) {
+        return false;
+    }
+    
+    // Check for other creeps
+    const allCreeps = getObjectsByPrototype(Creep);
+    for (const c of allCreeps) {
+        if (c.id !== creep.id && c.x === x && c.y === y) {
+            return false;
+        }
+    }
+    
+    // Swamps are traversable but slow
+    return true;
+}
+
+function getAvailableMoves(x, y, creep, visitedPositions) {
+    const moves = [];
+    const directions = [
+        { x: x - 1, y: y - 1 },
+        { x: x, y: y - 1 },
+        { x: x + 1, y: y - 1 },
+        { x: x - 1, y: y },
+        { x: x + 1, y: y },
+        { x: x - 1, y: y + 1 },
+        { x: x, y: y + 1 },
+        { x: x + 1, y: y + 1 }
+    ];
+    
+    for (const dir of directions) {
+        const key = `${dir.x},${dir.y}`;
+        if (!visitedPositions.has(key) && isPositionValid(dir.x, dir.y, creep)) {
+            moves.push(dir);
+        }
+    }
+    
+    return moves;
+}
