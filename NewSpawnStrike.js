@@ -1,4 +1,6 @@
-
+import { getObjectsByPrototype, getTicks, findPath, getTerrainAt, getDirection } from 'game/utils';
+import { Flag, Creep, StructureSpawn, StructureWall, StructureRampart,  } from 'game/prototypes';
+import { MOVE, CARRY, WORK, ATTACK, RANGED_ATTACK, HEAL, TOUGH, RESOURCE_ENERGY, ERR_NOT_IN_RANGE, BODYPART_COST, TERRAIN_WALL, TERRAIN_SWAMP } from 'game/constants';
 
 
 function isOnRampart(creep, ramparts) {
