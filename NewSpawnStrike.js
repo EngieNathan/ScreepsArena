@@ -283,3 +283,40 @@ function getAvailableMoves(x, y, creep, visitedPositions) {
     
     return moves;
 }
+
+export function loop() {
+
+    const flags = getObjectsByPrototype(Flag);
+    const creeps = getObjectsByPrototype(Creep);
+    const spawns = getObjectsByPrototype(StructureSpawn);
+    const ramparts = getObjectsByPrototype(StructureRampart);
+    const tick = getTicks();
+
+    var myCreeps = [];
+    var hostileCreeps = [];
+
+    for (var a = 0; a < spawns.length; a++) { // Get Spawns
+        var currentSpawn = spawns[a];
+        if (currentSpawn.my) {
+            var mySpawn = currentSpawn;
+        } else {
+            var enemySpawn = currentSpawn;
+        }
+    }
+
+    for (var b = 0; b < creeps.length; b++) { // Get Creeps
+        var currentCreep = creeps[b];
+        if (currentCreep.my && !currentCreep.spawning) {
+
+            myCreeps.push(currentCreep);
+            
+            for (var c = 0; c < creeps.length; c++) {
+                var enemyCreep = creeps[c];
+                if (!enemyCreep.my && !isOnRampart(enemyCreep, ramparts) && !isOnFlag(enemyCreep, flags) && !isOnSwamp(enemyCreep)) {
+                    hostileCreeps.push(enemyCreep);
+                }
+            }
+        }
+    }
+    
+}
